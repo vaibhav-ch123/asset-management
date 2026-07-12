@@ -1,0 +1,6 @@
+# Environment files
+.env
+.env.docker
+
+# PostgreSQL data (bind mount)
+pgdata/
