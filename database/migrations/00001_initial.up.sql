@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS employees(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR (30) NOT NULL,
     email VARCHAR (30) UNIQUE NOT NULL,
+    password VARCHAR NOT NULL,
     phone VARCHAR (10) UNIQUE NOT NULL,
     joining_date DATE NOT NULL,
     employee_type employee_types NOT NULL,
@@ -25,7 +26,6 @@ CREATE TABLE IF NOT EXISTS employees(
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP,
     archived_at TIMESTAMP 
-
 );
 
 CREATE TYPE asset_types AS ENUM (

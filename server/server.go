@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/vaibhav-ch123/asset-management/handlers"
+	"github.com/vaibhav-ch123/asset-management/middlewares"
 )
 
 type Server struct {
-	router *http.ServeMux
+	router http.Handler
 	server *http.Server
 }
 
@@ -20,14 +23,19 @@ const (
 
 func SetupRoute() *Server {
 
-	r := http.NewServeMux()
+	mux := http.NewServeMux()
 
-	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "server healthy!")
 	})
 
+	mux.HandleFunc("POST /v1/register", handlers.RegisterEmployee)
+	mux.HandleFunc("POST /v1/login", handlers.LoginEmployee)
+
+	mux.Handle("GET /v1/employee", middlewares.AuthMiddleWare(middlewares.ShouldHaveAdmin(http.HandlerFunc(handlers.GetEmployees))))
+
 	return &Server{
-		router: r,
+		router: middlewares.ContentTypeMiddleware(middlewares.PanicRecoveryMiddleware(mux)),
 	}
 }
 

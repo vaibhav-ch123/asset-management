@@ -5,6 +5,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -53,4 +54,28 @@ func migrateUp(db *sqlx.DB) error {
 	}
 
 	return nil
+}
+
+func Tx(fn func(tx *sqlx.Tx) error) error {
+
+	tx, err := AssetDB.Beginx()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %v", err)
+	}
+
+	defer func() {
+		if err != nil {
+			if Txerr := tx.Rollback(); Txerr != nil {
+				logrus.Errorf("failed to rollback transation: %v", Txerr)
+			}
+			return
+		}
+		if Txerr := tx.Commit(); Txerr != nil {
+			logrus.Errorf("failed to commit transation: %v", Txerr)
+		}
+	}()
+
+	err = fn(tx)
+
+	return err
 }
