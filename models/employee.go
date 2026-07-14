@@ -8,7 +8,7 @@ type Employee struct {
 	Email        string    `json:"email" db:"email"`
 	Password     string    `json:"password" db:"password"`
 	Phone        string    `json:"phone" db:"phone"`
-	JoiningDate  string    `json:"joiningDate" db:"joining_date"`
+	JoiningDate  time.Time `json:"joiningDate" db:"joining_date"`
 	EmployeeType string    `json:"employeeType" db:"employee_type"`
 	EmployeeRole string    `json:"employeeRole" db:"employee_role"`
 	CreatedAt    time.Time `json:"createdAt" db:"created_at"`
@@ -24,4 +24,15 @@ type EmployeeResponse struct {
 	JoiningDate  string `json:"joiningDate" db:"joining_date"`
 	EmployeeType string `json:"employeeType" db:"employee_type"`
 	EmployeeRole string `json:"employeeRole" db:"employee_role"`
+}
+
+type UpdateEmployeeRequest struct {
+	ID           string  `json:"id"`
+	Name         *string `json:"name"`
+	Email        *string `json:"email"`
+	Password     *string `json:"password"`
+	Phone        *string `json:"phone"`
+	JoiningDate  *time.Time `json:"joiningDate"`
+	EmployeeType *string `json:"employeeType"`
+	EmployeeRole *string `json:"employeeRole"`
 }

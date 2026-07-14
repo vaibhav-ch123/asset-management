@@ -2,8 +2,6 @@ package services
 
 import (
 
-	"time"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/vaibhav-ch123/asset-management/database"
 	"github.com/vaibhav-ch123/asset-management/errors"
@@ -12,7 +10,7 @@ import (
 	"github.com/vaibhav-ch123/asset-management/utils"
 )
 
-func RegisterEmployee(employee *models.Employee, joiningDate time.Time) (string, error) {
+func RegisterEmployee(employee *models.Employee) (string, error) {
 
 	userExist, userExistErr := repository.IsUserExists(employee.Email)
 
@@ -33,7 +31,7 @@ func RegisterEmployee(employee *models.Employee, joiningDate time.Time) (string,
 	var jwtToken string
 
 	txErr := database.Tx(func(tx *sqlx.Tx) error {
-		newEmployee, err := repository.RegisterEmployee(employee, joiningDate)
+		newEmployee, err := repository.RegisterEmployee(employee)
 		if err != nil {
 			return err
 		}
@@ -83,4 +81,24 @@ func GetEmployees() ([]models.EmployeeResponse, error) {
 	}
 
 	return employees, nil
+}
+
+func GetEmployee(id string) (*models.EmployeeResponse, error) {
+
+	employee, err := repository.GetEmployeeByID(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return employee, nil
+}
+
+func UpdateEmployee(employee models.UpdateEmployeeRequest) error {
+
+    if err := repository.UpdateEmployeeByID(employee); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -56,7 +56,7 @@ CREATE TYPE asset_statuses AS ENUM (
 
 CREATE TABLE IF NOT EXISTS assets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    asset_name VARCHAR (30),
+    asset_name VARCHAR (30) NOT NULL,
     asset_type asset_types NOT NULL,
     asset_brand asset_brands NOT NULL,
     serial_number VARCHAR(30) UNIQUE NOT NULL,
