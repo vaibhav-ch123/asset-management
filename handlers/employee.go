@@ -15,15 +15,7 @@ import (
 
 func RegisterEmployee(w http.ResponseWriter, r *http.Request) {
 
-	var body struct{
-		Name         string `json:"name"`
-		Email        string `json:"email"`
-		Password     string `json:"password"`
-		Phone        string `json:"phone"`
-		JoiningDate  string `json:"joiningDate"`
-		EmployeeType string `json:"employeeType"`
-		EmployeeRole string `json:"employeeRole"`
-	}
+	var body models.EmployeeRequest
 
 	if err := utils.ParseBody(r.Body, &body); err != nil {
 		utils.ResponseError(w, http.StatusBadRequest, err, "Failed to parse request body!")
@@ -69,7 +61,7 @@ func RegisterEmployee(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	joiningDate, DateErr := time.Parse("2006-01-01", body.JoiningDate)
+	_, DateErr := time.Parse("2006-01-01", body.JoiningDate)
 	if DateErr != nil {
 		utils.ResponseError(w, http.StatusBadRequest, nil, "Joining Date format is not valid!")
 		return
@@ -91,17 +83,7 @@ func RegisterEmployee(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	employee := models.Employee{
-		Name: body.Name,
-		Email: body.Email,
-		Password: body.Password,
-		Phone: body.Phone,
-		JoiningDate: joiningDate,
-		EmployeeType: body.EmployeeType,
-		EmployeeRole: body.EmployeeRole,
-	}
-
-	jwtToken, err := services.RegisterEmployee(&employee)
+	jwtToken, err := services.RegisterEmployee(&body)
 
 	if err != nil {
 		switch err {
@@ -197,15 +179,7 @@ func GetEmployee(w http.ResponseWriter, r *http.Request) {
 
 func UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 
-	var body struct {
-		Name         string `json:"name"`
-		Email        string `json:"email"`
-		Password     string `json:"password"`
-		Phone        string `json:"phone"`
-		JoiningDate  string `json:"joiningDate"`
-		EmployeeType string `json:"employeeType"`
-		EmployeeRole string `json:"employeeRole"`
-	}
+	var body models.EmployeeRequest
 
 	if err := utils.ParseBody(r.Body, &body); err != nil {
 		utils.ResponseError(w, http.StatusBadRequest, err, "failed to parse request body!")
@@ -285,25 +259,25 @@ func UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-    
+
 	employeeID := middlewares.EmployeeContext(r)
-	 
+
 	employee := models.UpdateEmployeeRequest{
-        ID: employeeID,
-		Name: &body.Name,
-		Email: &body.Email,
-		Password: &body.Password,
-		Phone: &body.Phone,
-		JoiningDate: &joiningDate,
+		ID:           employeeID,
+		Name:         &body.Name,
+		Email:        &body.Email,
+		Password:     &body.Password,
+		Phone:        &body.Phone,
+		JoiningDate:  &joiningDate,
 		EmployeeType: &body.EmployeeType,
 		EmployeeRole: &body.EmployeeRole,
 	}
-     
+
 	if err := services.UpdateEmployee(employee); err != nil {
 		utils.ResponseError(w, http.StatusInternalServerError, err, "failed to update employee!")
 	}
-    
-	utils.ResponseJSON(w, http.StatusOK, struct{
+
+	utils.ResponseJSON(w, http.StatusOK, struct {
 		Message string `json:"message"`
 	}{
 		Message: "employee updated",

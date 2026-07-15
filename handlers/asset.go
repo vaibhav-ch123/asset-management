@@ -114,7 +114,130 @@ func CreateAsset(w http.ResponseWriter, r *http.Request) {
 
 func GetAsset(w http.ResponseWriter, r *http.Request) {
 
-	// assetID := r.PathValue("id")
+	assetID := r.PathValue("id")
 
+	asset, err := services.GetAsset(assetID)
 
+	if err != nil {
+		utils.ResponseError(w, http.StatusInternalServerError, err, "failed to get asset!")
+		return
+	}
+
+	utils.ResponseJSON(w, http.StatusOK, asset)
+}
+
+func GetAssets(w http.ResponseWriter, r *http.Request) {
+
+	assets, assetsErr := services.GetAssets()
+
+	if assetsErr != nil {
+		utils.ResponseError(w, http.StatusInternalServerError, assetsErr, "failed to get asset!")
+		return
+	}
+
+	utils.ResponseJSON(w, http.StatusOK, assets)
+}
+
+func UpdateAsset(w http.ResponseWriter, r *http.Request) {
+
+	var body models.UpdateAssetRequest
+
+	if parseErr := utils.ParseBody(r.Body, &body); parseErr != nil {
+		utils.ResponseError(w, http.StatusBadRequest, parseErr, "failed to parse request body!")
+		return
+	}
+
+	if body.AssetName != nil {
+		*body.AssetName = strings.Trim(*body.AssetName, " ")
+
+		if len(*body.AssetName) > 30 {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "asset name must less than 30")
+			return
+		}
+	}
+
+	if body.AssetType != nil {
+		*body.AssetType = strings.Trim(*body.AssetType, " ")
+
+		validAssetTypes := map[string]bool{
+			"laptop":   true,
+			"monitor":  true,
+			"mouse":    true,
+			"keyboard": true,
+		}
+
+		if !validAssetTypes[*body.AssetType] {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "invalid assetType")
+			return
+		}
+	}
+
+	if body.SerialNumber != nil {
+		*body.SerialNumber = strings.Trim(*body.SerialNumber, " ")
+		if len(*body.SerialNumber) > 30 {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "serial number must less than 30")
+			return
+		}
+	}
+
+	if body.AssetBrand != nil {
+		*body.AssetBrand = strings.Trim(*body.AssetBrand, " ")
+		validBrands := map[string]bool{
+			"dell":     true,
+			"hp":       true,
+			"lenovo":   true,
+			"apple":    true,
+			"logitech": true,
+		}
+
+		if !validBrands[*body.AssetBrand] {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "invaild assetbrand")
+			return
+		}
+	}
+
+	if body.AssetStatus != nil {
+		*body.AssetStatus = strings.Trim(*body.AssetStatus, " ")
+		validStatuses := map[string]bool{
+			"available": true,
+			"assigned":  true,
+			"repair":    true,
+			"service":   true,
+			"damaged":   true,
+		}
+
+		if !validStatuses[*body.AssetStatus] {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "invalid assetStatus")
+			return
+		}
+	}
+
+	if body.PurchaseDate != nil {
+		*body.PurchaseDate = strings.Trim(*body.PurchaseDate, " ")
+		_, err := time.Parse("2006-01-02", *body.PurchaseDate)
+		if err != nil {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "purchaseDate must be in YYYY-MM-DD format")
+			return
+		}
+	}
+
+	if body.WarrantyExpiry != nil {
+		*body.WarrantyExpiry = strings.Trim(*body.WarrantyExpiry, " ")
+		_, err := time.Parse("2006-01-02", *body.WarrantyExpiry)
+		if err != nil {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "warrantyExpiry must be in YYYY-MM-DD format")
+			return
+		}
+	}
+
+	assetID := r.PathValue("id")
+
+	err := services.UpdateAsset(body, assetID)
+
+	if err != nil {
+		utils.ResponseError(w, http.StatusInternalServerError, err, "failed to update asset!")
+		return
+	}
+
+	utils.ResponseJSON(w, http.StatusOK, assetID)
 }

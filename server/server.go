@@ -35,9 +35,12 @@ func SetupRoute() *Server {
 	mux.Handle("GET /v1/employee", middlewares.AuthMiddleWare(middlewares.ShouldHaveAdmin(http.HandlerFunc(handlers.GetEmployees))))
 	mux.Handle("GET /v1/employee/{id}", middlewares.AuthMiddleWare(http.HandlerFunc(handlers.GetEmployee)))
 	mux.Handle("PATCH /v1/employee", middlewares.AuthMiddleWare(http.HandlerFunc(handlers.UpdateEmployee)))
-    
+
 	mux.Handle("POST /v1/asset", middlewares.AuthMiddleWare(middlewares.ShouldHaveAdmin(http.HandlerFunc(handlers.CreateAsset))))
-	 
+	mux.Handle("GET /v1/asset/{id}", middlewares.AuthMiddleWare(middlewares.ShouldHaveAdmin(http.HandlerFunc(handlers.GetAsset))))
+	mux.Handle("GET /v1/asset", middlewares.AuthMiddleWare(middlewares.ShouldHaveAdmin(http.HandlerFunc(handlers.GetAssets))))
+	mux.Handle("PATCH /v1/asset/{id}", middlewares.AuthMiddleWare(middlewares.ShouldHaveAdmin(http.HandlerFunc(handlers.UpdateAsset))))
+
 	return &Server{
 		router: middlewares.ContentTypeMiddleware(middlewares.PanicRecoveryMiddleware(mux)),
 	}

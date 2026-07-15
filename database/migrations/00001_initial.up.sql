@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS assets (
     asset_type asset_types NOT NULL,
     asset_brand asset_brands NOT NULL,
     serial_number VARCHAR(30) UNIQUE NOT NULL,
-    purchase_date DATE,
-    warranty_expiry DATE,
+    purchase_date DATE NOT NULL,
+    warranty_expiry DATE NOT NULL,
     asset_status asset_statuses NOT NULL,
     charger_available BOOLEAN DEFAULT FALSE,
 
@@ -74,19 +74,19 @@ CREATE TABLE IF NOT EXISTS laptop_specs (
 
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     asset_id UUID UNIQUE NOT NULL REFERENCES assets(id),
-    ram_gb INTEGER,
-    storage_gb INTEGER,
-    operating_system VARCHAR,
-    screen_resolution VARCHAR,
-    processor VARCHAR
+    ram_gb INTEGER NOT NULL,
+    storage_gb INTEGER NOT NULL,
+    operating_system VARCHAR NOT NULL,
+    screen_resolution VARCHAR NOT NULL,
+    processor VARCHAR NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS monitor_specs (
 
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     asset_id UUID UNIQUE NOT NULL REFERENCES assets(id),
-    screen_size VARCHAR,
-    screen_resolution VARCHAR
+    screen_size VARCHAR NOT NULL,
+    screen_resolution VARCHAR NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS mouse_specs (
@@ -106,9 +106,9 @@ CREATE TABLE IF NOT EXISTS keyboard_specs (
 CREATE TABLE IF NOT EXISTS phone_specs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     asset_id UUID UNIQUE NOT NULL REFERENCES assets(id),
-    ram_gb INTEGER,
-    storage_gb INTEGER,
-    operating_system VARCHAR
+    ram_gb INTEGER NOT NULL,
+    storage_gb INTEGER NOT NULL,
+    operating_system VARCHAR NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS asset_assignments (
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS asset_assignments (
     employee_id UUID REFERENCES employees(id) NOT NULL,
     asset_id UUID REFERENCES assets(id) NOT NULL,
     assigned_date DATE NOT NULL,
-    returned_date DATE,
+    returned_date DATE ,
     remark VARCHAR,
 
     created_at TIMESTAMP DEFAULT NOW(),

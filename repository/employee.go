@@ -8,15 +8,15 @@ import (
 	"github.com/vaibhav-ch123/asset-management/models"
 )
 
-func RegisterEmployee(employee *models.Employee)(models.Employee, error){
-    
+func RegisterEmployee(employee *models.EmployeeRequest) (models.Employee, error) {
+
 	SQL := `INSERT INTO employees (name, email, password, phone, joining_date, employee_type, employee_role)
 	       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, employee_role`
-	
-	var newEmployee models.Employee	
+
+	var newEmployee models.Employee
 
 	err := database.AssetDB.Get(&newEmployee, SQL, employee.Name, employee.Email, employee.Password, employee.Phone, employee.JoiningDate, employee.EmployeeType, employee.EmployeeRole)
-	
+
 	return newEmployee, err
 }
 
@@ -37,15 +37,15 @@ func IsUserExists(email string) (bool, error) {
 	return true, nil
 }
 
-func GetUserIDAndPasswordByEmail(email string) (*models.Employee, error){
+func GetUserIDAndPasswordByEmail(email string) (*models.Employee, error) {
 
 	SQL := `SELECT id, password, employee_role FROM employees
 	        WHERE email = $1 AND archived_at IS NULL`
 
-	var employee models.Employee		
-	
+	var employee models.Employee
+
 	err := database.AssetDB.Get(&employee, SQL, email)
-	
+
 	if err != nil && err == sql.ErrNoRows {
 		return &employee, errors.ErrEmailNotExists
 	}
@@ -70,8 +70,8 @@ func GetEmployees() ([]models.EmployeeResponse, error) {
 			FROM employees
 			WHERE archived_at IS NULL`
 
-	var employees []models.EmployeeResponse	
-	if err := database.AssetDB.Select(&employees, SQL); err != nil{
+	var employees []models.EmployeeResponse
+	if err := database.AssetDB.Select(&employees, SQL); err != nil {
 		return nil, err
 	}
 
@@ -92,11 +92,11 @@ func GetEmployeeByID(id string) (*models.EmployeeResponse, error) {
 			WHERE id = $1 AND archived_at IS NULL`
 
 	var employee models.EmployeeResponse
-	err := database.AssetDB.Get(employee, SQL, id) 
+	err := database.AssetDB.Get(employee, SQL, id)
 
 	if err != nil && err == sql.ErrNoRows {
 		return nil, errors.ErrEmployeeIDNotMatch
-	}		
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -116,12 +116,11 @@ func UpdateEmployeeByID(employee models.UpdateEmployeeRequest) error {
 				employee_role = COALESCE($7, employee_role)
 			WHERE id = $8 AND archived_at IS NULL`
 
-	_, err := database.AssetDB.Exec(SQL, *employee.Name, *employee.Email, *employee.Password, *employee.Phone, *employee.JoiningDate, *employee.EmployeeType, *employee.EmployeeRole)		
-    
+	_, err := database.AssetDB.Exec(SQL, employee.Name, employee.Email, employee.Password, employee.Phone, employee.JoiningDate, employee.EmployeeType, employee.EmployeeRole)
+
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
-

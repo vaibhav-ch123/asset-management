@@ -4,3 +4,5 @@
 
 # PostgreSQL data (bind mount)
 pgdata/
+
+.idea

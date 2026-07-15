@@ -1,7 +1,6 @@
 package services
 
 import (
-
 	"github.com/jmoiron/sqlx"
 	"github.com/vaibhav-ch123/asset-management/database"
 	"github.com/vaibhav-ch123/asset-management/errors"
@@ -10,7 +9,7 @@ import (
 	"github.com/vaibhav-ch123/asset-management/utils"
 )
 
-func RegisterEmployee(employee *models.Employee) (string, error) {
+func RegisterEmployee(employee *models.EmployeeRequest) (string, error) {
 
 	userExist, userExistErr := repository.IsUserExists(employee.Email)
 
@@ -74,8 +73,8 @@ func LoginEmployee(email, password string) (string, error) {
 
 func GetEmployees() ([]models.EmployeeResponse, error) {
 
-    employees, err := repository.GetEmployees()
-    
+	employees, err := repository.GetEmployees()
+
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +95,7 @@ func GetEmployee(id string) (*models.EmployeeResponse, error) {
 
 func UpdateEmployee(employee models.UpdateEmployeeRequest) error {
 
-    if err := repository.UpdateEmployeeByID(employee); err != nil {
+	if err := repository.UpdateEmployeeByID(employee); err != nil {
 		return err
 	}
 
