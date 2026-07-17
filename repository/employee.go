@@ -3,19 +3,20 @@ package repository
 import (
 	"database/sql"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/vaibhav-ch123/asset-management/database"
 	"github.com/vaibhav-ch123/asset-management/errors"
 	"github.com/vaibhav-ch123/asset-management/models"
 )
 
-func RegisterEmployee(employee *models.EmployeeRequest) (models.Employee, error) {
+func RegisterEmployee(tx sqlx.Ext, employee *models.EmployeeRequest) (models.Employee, error) {
 
 	SQL := `INSERT INTO employees (name, email, password, phone, joining_date, employee_type, employee_role)
 	       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, employee_role`
 
 	var newEmployee models.Employee
 
-	err := database.AssetDB.Get(&newEmployee, SQL, employee.Name, employee.Email, employee.Password, employee.Phone, employee.JoiningDate, employee.EmployeeType, employee.EmployeeRole)
+	err := tx.QueryRowx(SQL, employee.Name, employee.Email, employee.Password, employee.Phone, employee.JoiningDate, employee.EmployeeType, employee.EmployeeRole).Scan(&newEmployee.ID, &newEmployee.EmployeeRole)
 
 	return newEmployee, err
 }
@@ -92,7 +93,7 @@ func GetEmployeeByID(id string) (*models.EmployeeResponse, error) {
 			WHERE id = $1 AND archived_at IS NULL`
 
 	var employee models.EmployeeResponse
-	err := database.AssetDB.Get(employee, SQL, id)
+	err := database.AssetDB.Get(&employee, SQL, id)
 
 	if err != nil && err == sql.ErrNoRows {
 		return nil, errors.ErrEmployeeIDNotMatch
@@ -111,12 +112,12 @@ func UpdateEmployeeByID(employee models.UpdateEmployeeRequest) error {
 			    email = COALESCE($2, email),
 				password = COALESCE($3, password),
 				phone = COALESCE($4, phone),
-				joining_at = COALESCE($5, joining_at)
-				employee_type = COALESCE($6, employee_type)
+				joining_date = COALESCE($5, joining_date),
+				employee_type = COALESCE($6, employee_type),
 				employee_role = COALESCE($7, employee_role)
 			WHERE id = $8 AND archived_at IS NULL`
 
-	_, err := database.AssetDB.Exec(SQL, employee.Name, employee.Email, employee.Password, employee.Phone, employee.JoiningDate, employee.EmployeeType, employee.EmployeeRole)
+	_, err := database.AssetDB.Exec(SQL, employee.Name, employee.Email, employee.Password, employee.Phone, employee.JoiningDate, employee.EmployeeType, employee.EmployeeRole, employee.ID)
 
 	if err != nil {
 		return err

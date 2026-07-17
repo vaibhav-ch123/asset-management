@@ -22,14 +22,14 @@ type EmployeeResponse struct {
 }
 
 type UpdateEmployeeRequest struct {
-	ID           string     `json:"id"`
-	Name         *string    `json:"name"`
-	Email        *string    `json:"email"`
-	Password     *string    `json:"password"`
-	Phone        *string    `json:"phone"`
-	JoiningDate  *time.Time `json:"joiningDate"`
-	EmployeeType *string    `json:"employeeType"`
-	EmployeeRole *string    `json:"employeeRole"`
+	ID           string  `json:"id"`
+	Name         *string `json:"name"`
+	Email        *string `json:"email"`
+	Password     *string `json:"password"`
+	Phone        *string `json:"phone"`
+	JoiningDate  *string `json:"joiningDate"`
+	EmployeeType *string `json:"employeeType"`
+	EmployeeRole *string `json:"employeeRole"`
 }
 
 type Employee struct {

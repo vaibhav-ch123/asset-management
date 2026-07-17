@@ -16,7 +16,7 @@ func CreateAsset(asset models.CreateAssetRequest) (string, error) {
 
 	var assetID string
 	txErr := database.Tx(func(tx *sqlx.Tx) error {
-		assetID1, assestErr := repository.CreateAsset(asset)
+		assetID1, assestErr := repository.CreateAsset(tx, asset)
 		if assestErr != nil {
 			return assestErr
 		}
@@ -25,15 +25,20 @@ func CreateAsset(asset models.CreateAssetRequest) (string, error) {
 		var specErr error
 		switch asset.AssetType {
 		case "laptop":
-			specErr = repository.CreateLaptopSpec(asset.Laptop)
+			asset.Laptop.AssetID = assetID
+			specErr = repository.CreateLaptopSpec(tx, asset.Laptop)
 		case "monitor":
-			specErr = repository.CreateMonitorSpec(asset.Monitor)
+			asset.Monitor.AssetID = assetID
+			specErr = repository.CreateMonitorSpec(tx, asset.Monitor)
 		case "mouse":
-			specErr = repository.CreateMouseSpec(asset.Mouse)
+			asset.Mouse.AssetID = assetID
+			specErr = repository.CreateMouseSpec(tx, asset.Mouse)
 		case "keyboard":
-			specErr = repository.CreateKeyboardSpec(asset.Keyboard)
+			asset.Keyboard.AssetID = assetID
+			specErr = repository.CreateKeyboardSpec(tx, asset.Keyboard)
 		case "phone":
-			specErr = repository.CreatePhoneSpec(asset.Phone)
+			asset.Phone.AssetID = assetID
+			specErr = repository.CreatePhoneSpec(tx, asset.Phone)
 		}
 		if specErr != nil {
 			return specErr
@@ -159,7 +164,8 @@ func GetAssets() ([]models.AssetResponse, error) {
 		// Laptop
 		if a.LaptopID != nil {
 			resp.Laptop = &models.LaptopDetail{
-				ID: *a.LaptopID,
+				ID:      *a.LaptopID,
+				AssetID: a.ID,
 			}
 
 			if a.RAM != nil {
@@ -182,7 +188,8 @@ func GetAssets() ([]models.AssetResponse, error) {
 		// Monitor
 		if a.MonitorID != nil {
 			resp.Monitor = &models.MonitorDetail{
-				ID: *a.MonitorID,
+				ID:      *a.MonitorID,
+				AssetID: a.ID,
 			}
 
 			if a.MonitorScreenSize != nil {
@@ -196,7 +203,8 @@ func GetAssets() ([]models.AssetResponse, error) {
 		// Mouse
 		if a.MouseID != nil {
 			resp.Mouse = &models.MouseDetail{
-				ID: *a.MouseID,
+				ID:      *a.MouseID,
+				AssetID: a.ID,
 			}
 
 			if a.MouseWireless != nil {
@@ -207,7 +215,8 @@ func GetAssets() ([]models.AssetResponse, error) {
 		// Keyboard
 		if a.KeyboardID != nil {
 			resp.Keyboard = &models.KeyboardDetail{
-				ID: *a.KeyboardID,
+				ID:      *a.KeyboardID,
+				AssetID: a.ID,
 			}
 
 			if a.KeyboardWireless != nil {
@@ -218,7 +227,8 @@ func GetAssets() ([]models.AssetResponse, error) {
 		// Phone
 		if a.PhoneID != nil {
 			resp.Phone = &models.PhoneDetail{
-				ID: *a.PhoneID,
+				ID:      *a.PhoneID,
+				AssetID: a.ID,
 			}
 
 			if a.PhoneRAM != nil {
@@ -247,7 +257,7 @@ func UpdateAsset(assetSpec models.UpdateAssetRequest, assetID string) error {
 
 	txErr := database.Tx(func(tx *sqlx.Tx) error {
 
-		err := repository.UpdateAssetByAssetID(assetSpec, assetID)
+		err := repository.UpdateAssetByAssetID(tx, assetSpec, assetID)
 		if err != nil {
 			return err
 		}
@@ -255,15 +265,25 @@ func UpdateAsset(assetSpec models.UpdateAssetRequest, assetID string) error {
 		var specErr error
 		switch asset.AssetType {
 		case "laptop":
-			specErr = repository.UpdateLaptopSpecByAssetID(assetSpec.Laptop, assetID)
+			if assetSpec.Laptop != nil {
+				specErr = repository.UpdateLaptopSpecByAssetID(tx, assetSpec.Laptop, assetID)
+			}
 		case "monitor":
-			specErr = repository.UpdateMonitorSpecByAssetID(assetSpec.Monitor, assetID)
+			if assetSpec.Monitor != nil {
+				specErr = repository.UpdateMonitorSpecByAssetID(tx, assetSpec.Monitor, assetID)
+			}
 		case "mouse":
-			specErr = repository.UpdateMouseSpecByAssetID(assetSpec.Mouse, assetID)
+			if assetSpec.Mouse != nil {
+				specErr = repository.UpdateMouseSpecByAssetID(tx, assetSpec.Mouse, assetID)
+			}
 		case "keyboard":
-			specErr = repository.UpdateKeyboardSpecByAssetID(assetSpec.Keyboard, assetID)
+			if assetSpec.Keyboard != nil {
+				specErr = repository.UpdateKeyboardSpecByAssetID(tx, assetSpec.Keyboard, assetID)
+			}
 		case "phone":
-			specErr = repository.UpdatePhoneSpecByAssetID(assetSpec.Phone, assetID)
+			if assetSpec.Phone != nil {
+				specErr = repository.UpdatePhoneSpecByAssetID(tx, assetSpec.Phone, assetID)
+			}
 		}
 
 		if specErr != nil {

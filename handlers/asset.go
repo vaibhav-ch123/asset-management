@@ -48,6 +48,7 @@ func CreateAsset(w http.ResponseWriter, r *http.Request) {
 		"monitor":  true,
 		"mouse":    true,
 		"keyboard": true,
+		"phone":    true,
 	}
 
 	if !validAssetTypes[body.AssetType] {
@@ -81,20 +82,16 @@ func CreateAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.PurchaseDate != "" {
-		_, err := time.Parse("2006-01-02", body.PurchaseDate)
-		if err != nil {
-			utils.ResponseError(w, http.StatusBadRequest, nil, "purchaseDate must be in YYYY-MM-DD format")
-			return
-		}
+	_, purchaseErr := time.Parse("2006-01-02", body.PurchaseDate)
+	if purchaseErr != nil {
+		utils.ResponseError(w, http.StatusBadRequest, nil, "purchaseDate must be in YYYY-MM-DD format")
+		return
 	}
 
-	if body.WarrantyExpiry != "" {
-		_, err := time.Parse("2006-01-02", body.WarrantyExpiry)
-		if err != nil {
-			utils.ResponseError(w, http.StatusBadRequest, nil, "warrantyExpiry must be in YYYY-MM-DD format")
-			return
-		}
+	_, warrantyErr := time.Parse("2006-01-02", body.WarrantyExpiry)
+	if warrantyErr != nil {
+		utils.ResponseError(w, http.StatusBadRequest, nil, "warrantyExpiry must be in YYYY-MM-DD format")
+		return
 	}
 
 	assetID, err := services.CreateAsset(body)
@@ -164,6 +161,7 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 			"monitor":  true,
 			"mouse":    true,
 			"keyboard": true,
+			"phone":    true,
 		}
 
 		if !validAssetTypes[*body.AssetType] {
@@ -199,11 +197,12 @@ func UpdateAsset(w http.ResponseWriter, r *http.Request) {
 	if body.AssetStatus != nil {
 		*body.AssetStatus = strings.Trim(*body.AssetStatus, " ")
 		validStatuses := map[string]bool{
-			"available": true,
-			"assigned":  true,
-			"repair":    true,
-			"service":   true,
-			"damaged":   true,
+			"available":       true,
+			"assigned":        true,
+			"repair":          true,
+			"in_service":      true,
+			"damaged":         true,
+			"waiting__repair": true,
 		}
 
 		if !validStatuses[*body.AssetStatus] {

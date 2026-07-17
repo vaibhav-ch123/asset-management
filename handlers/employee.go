@@ -179,34 +179,37 @@ func GetEmployee(w http.ResponseWriter, r *http.Request) {
 
 func UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 
-	var body models.EmployeeRequest
+	var body models.UpdateEmployeeRequest
 
 	if err := utils.ParseBody(r.Body, &body); err != nil {
 		utils.ResponseError(w, http.StatusBadRequest, err, "failed to parse request body!")
 		return
 	}
 
-	body.Name = strings.Trim(body.Name, " ")
-	body.Email = strings.Trim(body.Email, " ")
-	body.Phone = strings.Trim(body.Phone, " ")
-	body.Password = strings.Trim(body.Password, " ")
-
-	if body.Name != "" && len(body.Name) < 3 {
-		utils.ResponseError(w, http.StatusBadRequest, nil, "Name Field cannot less then 4!")
-		return
+	if body.Name != nil {
+		*body.Name = strings.Trim(*body.Name, " ")
+		if len(*body.Name) < 3 {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "Name Field cannot less then 4!")
+			return
+		}
 	}
 
-	if body.Password != "" && len(body.Password) < 8 {
-		utils.ResponseError(w, http.StatusBadRequest, nil, "password Field cannot less then 8!")
-		return
+	if body.Password != nil {
+		*body.Password = strings.Trim(*body.Password, " ")
+		if len(*body.Password) < 8 {
+			utils.ResponseError(w, http.StatusBadRequest, nil, "password Field cannot less then 8!")
+			return
+		}
 	}
 
-	if body.Email != "" {
-		if len(body.Email) > 30 {
+	if body.Email != nil {
+		*body.Email = strings.Trim(*body.Email, " ")
+
+		if len(*body.Email) > 30 {
 			utils.ResponseError(w, http.StatusBadRequest, nil, "mail Field cannot greater then 30!")
 			return
 		}
-		_, mailErr := mail.ParseAddress(body.Email)
+		_, mailErr := mail.ParseAddress(*body.Email)
 
 		if mailErr != nil {
 			utils.ResponseError(w, http.StatusBadRequest, nil, "mail Field format is wrong!")
@@ -214,13 +217,14 @@ func UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if body.Password != "" {
-		if len(body.Phone) != 10 {
+	if body.Phone != nil {
+		*body.Phone = strings.Trim(*body.Phone, " ")
+		if len(*body.Phone) != 10 {
 			utils.ResponseError(w, http.StatusBadRequest, nil, "phone Field must be equal to 10!")
 			return
 		}
 
-		for _, ch := range body.Phone {
+		for _, ch := range *body.Phone {
 			if rune('0') > ch || rune('9') < ch {
 				utils.ResponseError(w, http.StatusBadRequest, nil, "Phone number is not valid!")
 				return
@@ -228,19 +232,16 @@ func UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var joiningDate time.Time
-
-	if body.JoiningDate != "" {
-		joiningDate1, DateErr := time.Parse("2006-01-01", body.JoiningDate)
+	if body.JoiningDate != nil {
+		_, DateErr := time.Parse("2006-01-01", *body.JoiningDate)
 		if DateErr != nil {
 			utils.ResponseError(w, http.StatusBadRequest, nil, "Joining Date format is not valid!")
 			return
 		}
-		joiningDate = joiningDate1
 	}
 
-	if body.EmployeeType != "" {
-		switch body.EmployeeType {
+	if body.EmployeeType != nil {
+		switch *body.EmployeeType {
 		case "full_time", "intern", "freelancer":
 			break
 		default:
@@ -250,8 +251,8 @@ func UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	if body.EmployeeRole != "" {
-		switch body.EmployeeRole {
+	if body.EmployeeRole != nil {
+		switch *body.EmployeeRole {
 		case "admin", "hr", "manager", "developer":
 			break
 		default:
@@ -260,21 +261,11 @@ func UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	employeeID := middlewares.EmployeeContext(r)
+	body.ID = middlewares.EmployeeContext(r)
 
-	employee := models.UpdateEmployeeRequest{
-		ID:           employeeID,
-		Name:         &body.Name,
-		Email:        &body.Email,
-		Password:     &body.Password,
-		Phone:        &body.Phone,
-		JoiningDate:  &joiningDate,
-		EmployeeType: &body.EmployeeType,
-		EmployeeRole: &body.EmployeeRole,
-	}
-
-	if err := services.UpdateEmployee(employee); err != nil {
+	if err := services.UpdateEmployee(body); err != nil {
 		utils.ResponseError(w, http.StatusInternalServerError, err, "failed to update employee!")
+		return
 	}
 
 	utils.ResponseJSON(w, http.StatusOK, struct {

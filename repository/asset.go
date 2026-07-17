@@ -3,24 +3,11 @@ package repository
 import (
 	"database/sql"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/vaibhav-ch123/asset-management/database"
 	"github.com/vaibhav-ch123/asset-management/errors"
 	"github.com/vaibhav-ch123/asset-management/models"
 )
-
-func CreateAsset(asset models.CreateAssetRequest) (string, error) {
-
-	SQL := `INSERT INTO assets (asset_name, asset_type, asset_brand, serial_number, purchase_date, warranty_expiry, asset_status, charger_available)
-	        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
-
-	var assetID string
-
-	if err := database.AssetDB.Get(&assetID, SQL, asset.AssetName, asset.AssetType, asset.AssetBrand, asset.SerialNumber, asset.PurchaseDate, asset.WarrantyExpiry, asset.AssetStatus, asset.ChargerAvailable); err != nil {
-		return "", err
-	}
-
-	return assetID, nil
-}
 
 func SerialExist(serialNumber string) (bool, error) {
 
@@ -34,29 +21,43 @@ func SerialExist(serialNumber string) (bool, error) {
 	}
 
 	if err == sql.ErrNoRows {
-		return true, errors.ErrAssetSerialNumberMatch
+		return false, nil
 	}
 
-	return false, nil
+	return true, errors.ErrAssetSerialNumberMatch
 }
 
-func CreateLaptopSpec(laptop models.LaptopDetail) error {
+func CreateAsset(tx sqlx.Ext, asset models.CreateAssetRequest) (string, error) {
 
-	SQL := `INSERT INTO laptop_specs (assest_id, ram_gb, storage_gb, operating_system, screen_resolution, processor)
+	SQL := `INSERT INTO assets (asset_name, asset_type, asset_brand, serial_number, purchase_date, warranty_expiry, asset_status, charger_available)
+	        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+
+	var assetID string
+
+	if err := tx.QueryRowx(SQL, asset.AssetName, asset.AssetType, asset.AssetBrand, asset.SerialNumber, asset.PurchaseDate, asset.WarrantyExpiry, asset.AssetStatus, asset.ChargerAvailable).Scan(&assetID); err != nil {
+		return "", err
+	}
+
+	return assetID, nil
+}
+
+func CreateLaptopSpec(tx sqlx.Ext, laptop models.LaptopDetail) error {
+
+	SQL := `INSERT INTO laptop_specs (asset_id, ram_gb, storage_gb, operating_system, screen_resolution, processor)
 	        VALUES ($1, $2, $3, $4, $5, $6)`
 
-	_, err := database.AssetDB.Exec(SQL, laptop.AssetID, laptop.RAM, laptop.Storage, laptop.OperatingSystem, laptop.ScreenResolution, laptop.Processor)
+	_, err := tx.Exec(SQL, laptop.AssetID, laptop.RAM, laptop.Storage, laptop.OperatingSystem, laptop.ScreenResolution, laptop.Processor)
 
 	return err
 }
 
-func CreateMonitorSpec(monitor models.MonitorDetail) error {
+func CreateMonitorSpec(tx sqlx.Ext, monitor models.MonitorDetail) error {
 
 	SQL := `INSERT INTO monitor_specs
 			(asset_id, screen_size, screen_resolution)
 			VALUES ($1, $2, $3)`
 
-	_, err := database.AssetDB.Exec(
+	_, err := tx.Exec(
 		SQL,
 		monitor.AssetID,
 		monitor.ScreenSize,
@@ -66,13 +67,13 @@ func CreateMonitorSpec(monitor models.MonitorDetail) error {
 	return err
 }
 
-func CreateMouseSpec(mouse models.MouseDetail) error {
+func CreateMouseSpec(tx sqlx.Ext, mouse models.MouseDetail) error {
 
 	SQL := `INSERT INTO mouse_specs
 			(asset_id, wireless)
 			VALUES ($1, $2)`
 
-	_, err := database.AssetDB.Exec(
+	_, err := tx.Exec(
 		SQL,
 		mouse.AssetID,
 		mouse.Wireless,
@@ -81,13 +82,13 @@ func CreateMouseSpec(mouse models.MouseDetail) error {
 	return err
 }
 
-func CreateKeyboardSpec(keyboard models.KeyboardDetail) error {
+func CreateKeyboardSpec(tx sqlx.Ext, keyboard models.KeyboardDetail) error {
 
 	SQL := `INSERT INTO keyboard_specs
 			(asset_id, wireless)
 			VALUES ($1, $2)`
 
-	_, err := database.AssetDB.Exec(
+	_, err := tx.Exec(
 		SQL,
 		keyboard.AssetID,
 		keyboard.Wireless,
@@ -96,13 +97,13 @@ func CreateKeyboardSpec(keyboard models.KeyboardDetail) error {
 	return err
 }
 
-func CreatePhoneSpec(phone models.PhoneDetail) error {
+func CreatePhoneSpec(tx sqlx.Ext, phone models.PhoneDetail) error {
 
 	SQL := `INSERT INTO phone_specs
 			(asset_id, ram_gb, storage_gb, operating_system)
 			VALUES ($1, $2, $3, $4)`
 
-	_, err := database.AssetDB.Exec(
+	_, err := tx.Exec(
 		SQL,
 		phone.AssetID,
 		phone.RAM,
@@ -251,7 +252,7 @@ func GetAssetsWithSpec() ([]models.AssetWithSpecs, error) {
 	return assetSpec, err
 }
 
-func UpdateAssetByAssetID(asset models.UpdateAssetRequest, assestID string) error {
+func UpdateAssetByAssetID(tx sqlx.Ext, asset models.UpdateAssetRequest, assestID string) error {
 
 	SQL := `UPDATE assets
 	        SET asset_name = COALESCE($1, asset_name),
@@ -261,64 +262,64 @@ func UpdateAssetByAssetID(asset models.UpdateAssetRequest, assestID string) erro
 			    purchase_date = COALESCE($5, purchase_date),
 			    warranty_expiry = COALESCE($6, warranty_expiry),
 			    asset_status = COALESCE($7, asset_status),
-			    charger_available = COALESCE($8, charger_available),
+			    charger_available = COALESCE($8, charger_available)
 			WHERE id = $9 AND archived_at IS NULL`
 
-	_, err := database.AssetDB.Exec(SQL, asset.AssetName, asset.AssetType, asset.AssetBrand, asset.SerialNumber, asset.PurchaseDate, asset.WarrantyExpiry, asset.AssetStatus, asset.ChargerAvailable, assestID)
+	_, err := tx.Exec(SQL, asset.AssetName, asset.AssetType, asset.AssetBrand, asset.SerialNumber, asset.PurchaseDate, asset.WarrantyExpiry, asset.AssetStatus, asset.ChargerAvailable, assestID)
 
 	return err
 }
 
-func UpdateLaptopSpecByAssetID(laptop *models.UpdateLaptopDetail, assetID string) error {
+func UpdateLaptopSpecByAssetID(tx sqlx.Ext, laptop *models.UpdateLaptopDetail, assetID string) error {
 
 	SQL := `UPDATE laptop_specs
             SET ram_gb = COALESCE($1, ram_gb),
                 storage_gb = COALESCE($2, storage_gb),
-                operating_system = COALESCE($3, operating_system)
+                operating_system = COALESCE($3, operating_system),
                 screen_resolution = COALESCE($4, screen_resolution),
                 processor = COALESCE($5, processor)
             WHERE asset_id = $6`
 
-	_, err := database.AssetDB.Exec(SQL, laptop.RAM, laptop.Storage, laptop.OperatingSystem, laptop.ScreenResolution, laptop.Processor, assetID)
+	_, err := tx.Exec(SQL, laptop.RAM, laptop.Storage, laptop.OperatingSystem, laptop.ScreenResolution, laptop.Processor, assetID)
 
 	return err
 }
 
-func UpdateMonitorSpecByAssetID(monitor *models.UpdateMonitorDetail, assetID string) error {
+func UpdateMonitorSpecByAssetID(tx sqlx.Ext, monitor *models.UpdateMonitorDetail, assetID string) error {
 
 	SQL := `UPDATE monitor_specs
             SET screen_size = COALESCE($1, screen_size),
                 screen_resolution = COALESCE($2, screen_resolution)
             WHERE asset_id = $3`
 
-	_, err := database.AssetDB.Exec(SQL, monitor.ScreenSize, monitor.ScreenResolution, assetID)
+	_, err := tx.Exec(SQL, monitor.ScreenSize, monitor.ScreenResolution, assetID)
 
 	return err
 }
 
-func UpdateMouseSpecByAssetID(mouse *models.UpdateMouseDetail, assetID string) error {
+func UpdateMouseSpecByAssetID(tx sqlx.Ext, mouse *models.UpdateMouseDetail, assetID string) error {
 
 	SQL := `UPDATE mouse_specs
             SET wireless = COALESCE($1, wireless)
             WHERE asset_id = $2`
 
-	_, err := database.AssetDB.Exec(SQL, mouse.Wireless, assetID)
+	_, err := tx.Exec(SQL, mouse.Wireless, assetID)
 
 	return err
 }
 
-func UpdateKeyboardSpecByAssetID(keyboard *models.UpdateKeyboardDetail, assetID string) error {
+func UpdateKeyboardSpecByAssetID(tx sqlx.Ext, keyboard *models.UpdateKeyboardDetail, assetID string) error {
 
 	SQL := `UPDATE keyboard_specs
             SET wireless = COALESCE($1, wireless)
             WHERE asset_id = $2`
 
-	_, err := database.AssetDB.Exec(SQL, keyboard.Wireless, assetID)
+	_, err := tx.Exec(SQL, keyboard.Wireless, assetID)
 
 	return err
 }
 
-func UpdatePhoneSpecByAssetID(phone *models.UpdatePhoneDetail, assetID string) error {
+func UpdatePhoneSpecByAssetID(tx sqlx.Ext, phone *models.UpdatePhoneDetail, assetID string) error {
 
 	SQL := `UPDATE phone_specs
             SET ram_gb = COALESCE($1, ram_gb),
@@ -326,7 +327,7 @@ func UpdatePhoneSpecByAssetID(phone *models.UpdatePhoneDetail, assetID string) e
                 operating_system = COALESCE($3, operating_system)
             WHERE asset_id = $4`
 
-	_, err := database.AssetDB.Exec(SQL, phone.RAM, phone.Storage, phone.OperatingSystem)
+	_, err := tx.Exec(SQL, phone.RAM, phone.Storage, phone.OperatingSystem, assetID)
 
 	return err
 }

@@ -30,7 +30,7 @@ func RegisterEmployee(employee *models.EmployeeRequest) (string, error) {
 	var jwtToken string
 
 	txErr := database.Tx(func(tx *sqlx.Tx) error {
-		newEmployee, err := repository.RegisterEmployee(employee)
+		newEmployee, err := repository.RegisterEmployee(tx, employee)
 		if err != nil {
 			return err
 		}

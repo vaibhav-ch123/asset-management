@@ -114,8 +114,8 @@ func CreateJwtToken(employeeID, employeeRole string) (string, error) {
 		jwt.MapClaims{
 			"employeeID":   employeeID,
 			"employeeRole": employeeRole,
-			"ExpiresAt":    time.Now().Add(time.Minute * 5),
-			"IssuedAt":     time.Now(),
+			"exp":          time.Now().Add(time.Hour * 24).Unix(),
+			"iat":          time.Now().Unix(),
 		})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
@@ -129,6 +129,10 @@ func CreateJwtToken(employeeID, employeeRole string) (string, error) {
 
 func VerifyJwtToken(tokenString string) (map[string]any, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
 		return []byte(os.Getenv("JWT_SECRET_KEY")), nil
 	})
 

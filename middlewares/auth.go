@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 type ContextKeys string
 
 const (
-	employeeContext ContextKeys = "__employeeContext"
+	employeeContext     ContextKeys = "__employeeContext"
 	employeeRoleContext ContextKeys = "__employeeRoleContext"
 )
 
@@ -30,10 +31,11 @@ func AuthMiddleWare(next http.Handler) http.Handler {
 
 		claims, jwtErr := utils.VerifyJwtToken(jwtToken)
 		if jwtErr != nil {
+			fmt.Println(jwtErr)
 			w.WriteHeader(http.StatusUnauthorized)
-			return 
+			return
 		}
-        
+
 		employeeID, ok := claims["employeeID"].(string)
 		if !ok {
 			utils.ResponseError(w, http.StatusUnauthorized, nil, "Unauthorized!")
@@ -54,27 +56,28 @@ func AuthMiddleWare(next http.Handler) http.Handler {
 }
 
 func EmployeeContext(r *http.Request) string {
-    if empID, empErr := r.Context().Value(employeeContext).(string); empErr && empID != "" {
+	if empID, empErr := r.Context().Value(employeeContext).(string); empErr && empID != "" {
 		return empID
 	}
 	return ""
 }
 
 func EmployeeRoleContext(r *http.Request) string {
-    if empRole, empErr := r.Context().Value(employeeRoleContext).(string); empErr && empRole != "" {
+	if empRole, empErr := r.Context().Value(employeeRoleContext).(string); empErr && empRole != "" {
 		return empRole
 	}
 	return ""
 }
 
 func ShouldHaveAdmin(next http.Handler) http.Handler {
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        
+
 		employeeRole := EmployeeRoleContext(r)
-		
+
 		if employeeRole != "admin" {
-           utils.ResponseError(w, http.StatusUnauthorized, nil, "Admin access required!")
-		   return
+			utils.ResponseError(w, http.StatusUnauthorized, nil, "Admin access required!")
+			return
 		}
 
 		next.ServeHTTP(w, r)
